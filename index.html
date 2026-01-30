@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タワーディフェンス - ファンタジー</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <!-- ゲーム情報表示エリア -->
+        <header class="game-header">
+            <div class="stat">
+                <span class="stat-icon">❤️</span>
+                <span id="lives">10</span>
+            </div>
+            <div class="stat">
+                <span class="stat-icon">💰</span>
+                <span id="gold">200</span>
+            </div>
+            <div class="stat">
+                <span class="stat-icon">🌊</span>
+                Wave <span id="wave">1</span>
+            </div>
+        </header>
+
+        <!-- ゲームキャンバス -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- タワー選択パネル -->
+        <div class="tower-panel">
+            <h3>タワーを選択</h3>
+            <div class="tower-buttons">
+                <!-- 戦士タワー：近距離高火力 -->
+                <button class="tower-btn" data-tower="warrior" title="近距離で高ダメージ">
+                    <span class="tower-icon">🗡️</span>
+                    <span class="tower-name">戦士</span>
+                    <span class="tower-cost">50G</span>
+                </button>
+                <!-- 弓使いタワー：バランス型 -->
+                <button class="tower-btn" data-tower="archer" title="バランスの取れた攻撃">
+                    <span class="tower-icon">🏹</span>
+                    <span class="tower-name">弓使い</span>
+                    <span class="tower-cost">75G</span>
+                </button>
+                <!-- 魔法使いタワー：範囲攻撃 -->
+                <button class="tower-btn" data-tower="mage" title="範囲攻撃（スプラッシュ）">
+                    <span class="tower-icon">🔮</span>
+                    <span class="tower-name">魔法使い</span>
+                    <span class="tower-cost">100G</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ゲームコントロール -->
+        <div class="game-controls">
+            <button id="startWaveBtn" class="control-btn">Wave開始</button>
+            <div class="speed-controls">
+                <span>速度:</span>
+                <button class="speed-btn" data-speed="1">1x</button>
+                <button class="speed-btn active" data-speed="2">2x</button>
+                <button class="speed-btn" data-speed="3">3x</button>
+            </div>
+            <button id="restartBtn" class="control-btn" style="display: none;">リスタート</button>
+        </div>
+
+        <!-- 次Wave情報 -->
+        <div id="waveInfo" class="wave-info">
+            <span class="wave-label">次Wave:</span>
+            <span id="nextWaveEnemies">🟢x5</span>
+        </div>
+
+        <!-- ゲームオーバー/クリア画面 -->
+        <div id="gameOverlay" class="game-overlay" style="display: none;">
+            <div class="overlay-content">
+                <h2 id="overlayTitle">ゲームオーバー</h2>
+                <p id="overlayMessage">防衛に失敗しました...</p>
+                <button id="overlayRestartBtn" class="control-btn">もう一度挑戦</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScriptモジュール読み込み -->
+    <script src="js/effects.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/enemy.js"></script>
+    <script src="js/tower.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

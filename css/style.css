@@ -1,0 +1,301 @@
+/* ==========================================
+   タワーディフェンス - スタイルシート
+   ダークテーマのファンタジーUI
+   ========================================== */
+
+/* CSS変数（デザイントークン） */
+:root {
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-accent: #0f3460;
+    --text-primary: #eaeaea;
+    --text-secondary: #a0a0a0;
+    --gold: #ffd700;
+    --health: #e74c3c;
+    --warrior-color: #e67e22;
+    --archer-color: #27ae60;
+    --mage-color: #9b59b6;
+    --border-glow: rgba(100, 200, 255, 0.3);
+}
+
+/* リセットと基本スタイル */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-primary);
+}
+
+/* ゲームコンテナ */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ヘッダー（ゲーム情報） */
+.game-header {
+    display: flex;
+    gap: 40px;
+    padding: 15px 30px;
+    background: var(--bg-accent);
+    border-radius: 15px;
+    border: 1px solid var(--border-glow);
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.stat-icon {
+    font-size: 1.4rem;
+}
+
+/* ゲームキャンバス */
+#gameCanvas {
+    border: 3px solid var(--bg-accent);
+    border-radius: 10px;
+    background: #2d4a3e;
+    box-shadow:
+        0 0 20px rgba(0, 0, 0, 0.5),
+        inset 0 0 50px rgba(0, 0, 0, 0.3);
+}
+
+/* タワー選択パネル */
+.tower-panel {
+    background: var(--bg-secondary);
+    padding: 15px 25px;
+    border-radius: 15px;
+    border: 1px solid var(--border-glow);
+    text-align: center;
+}
+
+.tower-panel h3 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+.tower-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+/* タワーボタン */
+.tower-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 12px 20px;
+    background: var(--bg-accent);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 90px;
+}
+
+.tower-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(100, 200, 255, 0.3);
+}
+
+.tower-btn.selected {
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.tower-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tower-btn[data-tower="warrior"] {
+    border-bottom: 3px solid var(--warrior-color);
+}
+
+.tower-btn[data-tower="archer"] {
+    border-bottom: 3px solid var(--archer-color);
+}
+
+.tower-btn[data-tower="mage"] {
+    border-bottom: 3px solid var(--mage-color);
+}
+
+.tower-icon {
+    font-size: 2rem;
+}
+
+.tower-name {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.tower-cost {
+    font-size: 0.75rem;
+    color: var(--gold);
+}
+
+/* ゲームコントロール */
+.game-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.control-btn {
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.5);
+}
+
+.control-btn:active {
+    transform: scale(0.98);
+}
+
+/* ゲームオーバーレイ */
+.game-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 40px 60px;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    border: 2px solid var(--border-glow);
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.overlay-content h2 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.overlay-content p {
+    color: var(--text-secondary);
+    margin-bottom: 25px;
+}
+
+/* ゲームオーバー時のタイトル色 */
+.overlay-content h2.game-over {
+    color: var(--health);
+}
+
+.overlay-content h2.victory {
+    color: var(--gold);
+}
+
+/* スピードコントロール */
+.speed-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-accent);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.speed-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.speed-btn:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.speed-btn.active {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 次Wave情報 */
+.wave-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: var(--bg-accent);
+    border-radius: 15px;
+    border: 1px solid var(--border-glow);
+    font-size: 0.9rem;
+}
+
+.wave-label {
+    color: var(--text-secondary);
+}
+
+#nextWaveEnemies {
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+/* コントロールボタン無効化時 */
+.control-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
