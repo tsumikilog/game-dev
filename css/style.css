@@ -1,0 +1,54 @@
+/* ===========================================
+   AI朝活RPG — メインスタイルシート
+   朝活をテーマにしたダークテーマ（紫〜オレンジグラデ）
+   =========================================== */
+
+/* リセットと基本設定 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* bodyの背景: 夜明け前の空を表現するグラデーション */
+body {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    height: 100dvh;
+    /* モバイルのアドレスバー考慮 */
+    font-family: 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+    padding: 8px;
+}
+
+/* ゲームコンテナ: Phaserのcanvasをラップ */
+/* サイズはJavaScript（main.js）で動的に設定される */
+#game-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    /* グロー効果（朝日の光漏れ） */
+    box-shadow:
+        0 0 40px rgba(255, 165, 0, 0.15),
+        0 0 80px rgba(138, 43, 226, 0.1),
+        0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Phaserが生成するcanvas */
+#game-container canvas {
+    display: block;
+}
+
+/* モバイル対応 */
+@media (max-width: 820px) {
+    body {
+        padding: 4px;
+    }
+
+    #game-container {
+        border-radius: 8px;
+    }
+}

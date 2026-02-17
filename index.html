@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ページタイトル -->
+    <title>AI朝活RPG — AIを武器に人生を変えろ！</title>
+    <!-- SEO メタタグ -->
+    <meta name="description" content="手取り19万・拘束12時間のパパが、AIを武器に朝活で人生を変える成長シミュレーションRPG。5分で遊べるブラウザゲーム。">
+    <!-- Google Fonts: Noto Sans JP（日本語） + Orbitron（タイトルロゴ用） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Orbitron:wght@700;900&display=swap"
+        rel="stylesheet">
+    <!-- スタイルシート -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- ゲームのメインコンテナ -->
+    <div id="game-container"></div>
+
+    <!-- Phaser.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+
+    <!-- ゲームのJavaScriptファイル -->
+    <script src="js/config.js"></script> <!-- ゲーム設定・定数 -->
+    <script src="js/data.js"></script> <!-- 行動・イベント・キャラデータ -->
+    <script src="js/scenes/TitleScene.js"></script> <!-- タイトル画面 -->
+    <script src="js/scenes/PrologueScene.js"></script> <!-- プロローグ -->
+    <script src="js/scenes/MainScene.js"></script> <!-- メイン画面 -->
+    <script src="js/scenes/EventScene.js"></script> <!-- イベント -->
+    <script src="js/scenes/WeekEndScene.js"></script> <!-- 週末まとめ -->
+    <script src="js/scenes/EndingScene.js"></script> <!-- エンディング -->
+    <script src="js/main.js"></script> <!-- エントリーポイント -->
+</body>
+
+</html>
