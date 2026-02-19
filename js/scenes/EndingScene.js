@@ -12,6 +12,11 @@ class EndingScene extends Phaser.Scene {
         this.stats = { ...data.stats };
         // エンディング判定
         this.ending = ENDINGS.find(e => e.condition(this.stats));
+        // クリアフラグ保存（周回要素用）
+        try {
+            localStorage.setItem('ai_rpg_cleared', 'true');
+            localStorage.removeItem('ai_rpg_save');  // セーブデータ削除
+        } catch (e) { /* 無視 */ }
     }
 
     create() {
@@ -42,6 +47,18 @@ class EndingScene extends Phaser.Scene {
         this.showDialogue(this.ending.story[0]);
 
         this.input.on('pointerdown', () => this.nextDialogue());
+
+        // ========== SKIPボタン ==========
+        this.skipBtn = this.add.text(width - 20, 20, '⏩ SKIP', {
+            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '13px',
+            color: '#666688', fontStyle: 'bold',
+        }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+        this.skipBtn.on('pointerover', () => this.skipBtn.setColor('#ffd700'));
+        this.skipBtn.on('pointerout', () => this.skipBtn.setColor('#666688'));
+        this.skipBtn.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();
+            this.skipEnding();
+        });
 
         this.cameras.main.fadeIn(800, 0, 0, 0);
     }
@@ -239,5 +256,18 @@ class EndingScene extends Phaser.Scene {
                 this.scene.start('TitleScene');
             });
         });
+    }
+
+    // ========== エンディングストーリーをスキップ ==========
+    skipEnding() {
+        // タイプライターを停止
+        if (this.typeTimer) this.typeTimer.destroy();
+        this.isTyping = false;
+        // クリックリスナーを解除
+        this.input.off('pointerdown');
+        // SKIPボタンを非表示
+        if (this.skipBtn) this.skipBtn.setVisible(false);
+        // リザルト画面へ直接遷移
+        this.showResult();
     }
 }

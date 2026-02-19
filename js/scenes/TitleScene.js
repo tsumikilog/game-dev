@@ -60,6 +60,17 @@ class TitleScene extends Phaser.Scene {
         // ========== STARTボタン ==========
         this.createStartButton(width, height);
 
+        // ========== 「つづきから」ボタン ==========
+        this.createContinueButton(width, height);
+
+        // ========== 周回マーク ==========
+        if (localStorage.getItem('ai_rpg_cleared') === 'true') {
+            this.add.text(width / 2, height * 0.20, '★ CLEARED', {
+                fontFamily: 'Orbitron, sans-serif', fontSize: '14px',
+                color: '#ffd700',
+            }).setOrigin(0.5);
+        }
+
         // ========== フッターテキスト ==========
         this.add.text(width / 2, height * 0.92, '© 2026 ジュラ | AI朝活RPG', {
             fontFamily: 'Noto Sans JP, sans-serif',
@@ -196,5 +207,69 @@ class TitleScene extends Phaser.Scene {
         // 上辺にハイライト（光沢感）
         graphics.fillStyle(0xffffff, 0.1);
         graphics.fillRoundedRect(x + 2, y + 2, w - 4, h / 2 - 2, { tl: 10, tr: 10, bl: 0, br: 0 });
+    }
+
+    /**
+     * 「つづきから」ボタンを作成
+     * localStorageにセーブデータがある場合のみ表示
+     */
+    createContinueButton(width, height) {
+        let saveData = null;
+        try {
+            const raw = localStorage.getItem('ai_rpg_save');
+            if (raw) saveData = JSON.parse(raw);
+        } catch (e) { /* パース失敗時は無視 */ }
+
+        if (!saveData) return;  // セーブデータなし
+
+        const btnY = height * 0.74;
+        const btnW = 200;
+        const btnH = 40;
+
+        // ボタン背景
+        const btnBg = this.add.graphics();
+        btnBg.fillStyle(0x2a2850, 0.9);
+        btnBg.fillRoundedRect(width / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 8);
+        btnBg.lineStyle(1, 0xffd700, 0.3);
+        btnBg.strokeRoundedRect(width / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 8);
+
+        // ボタンテキスト
+        const label = `▶ つづきから (Week${saveData.week})`;
+        const btnText = this.add.text(width / 2, btnY, label, {
+            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '14px',
+            color: '#ccccee', fontStyle: 'bold',
+        }).setOrigin(0.5);
+
+        // クリック判定ゾーン
+        const hit = this.add.zone(width / 2, btnY, btnW, btnH)
+            .setInteractive({ useHandCursor: true });
+
+        hit.on('pointerover', () => {
+            btnBg.clear();
+            btnBg.fillStyle(COLORS.BTN_HOVER, 0.9);
+            btnBg.fillRoundedRect(width / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 8);
+            btnText.setColor('#ffffff');
+        });
+        hit.on('pointerout', () => {
+            btnBg.clear();
+            btnBg.fillStyle(0x2a2850, 0.9);
+            btnBg.fillRoundedRect(width / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 8);
+            btnBg.lineStyle(1, 0xffd700, 0.3);
+            btnBg.strokeRoundedRect(width / 2 - btnW / 2, btnY - btnH / 2, btnW, btnH, 8);
+            btnText.setColor('#ccccee');
+        });
+        hit.on('pointerdown', () => {
+            this.cameras.main.flash(200, 255, 215, 0, false);
+            this.cameras.main.fadeOut(400, 0, 0, 0);
+            this.cameras.main.once('camerafadeoutcomplete', () => {
+                // セーブデータからMainSceneを開始
+                this.scene.start('MainScene', {
+                    week: saveData.week,
+                    turn: saveData.turn,
+                    stats: { ...saveData.stats },
+                    unlockedCommands: saveData.unlockedCommands || [],
+                });
+            });
+        });
     }
 }

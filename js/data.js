@@ -67,7 +67,8 @@ const ACTIONS = [
         name: '🤖 ChatGPT活用',
         description: 'AIアシスタントで効率化',
         effects: { stamina: -10, aiKnowledge: 5, sideHustle: 12, family: 0, motivation: 10 },
-        unlockCondition: { stat: 'aiKnowledge', value: BALANCE.UNLOCK_CHATGPT },
+        unlockCondition: null,
+        requiresUnlock: true,   // 週間判定で解放されるコマンド
         dialogue: [
             { speaker: '主人公', text: 'ChatGPTに聞いてみよう…おお、すごい！' },
             { speaker: 'ナレーション', text: 'AIの力で作業効率が格段にアップした！' },
@@ -78,7 +79,8 @@ const ACTIONS = [
         name: '⚡ OpenClaw活用',
         description: 'AIエージェントに丸投げ',
         effects: { stamina: -5, aiKnowledge: 5, sideHustle: 20, family: 0, motivation: 10 },
-        unlockCondition: { stat: 'aiKnowledge', value: BALANCE.UNLOCK_OPENCLAW },
+        unlockCondition: null,
+        requiresUnlock: true,   // 週間判定で解放されるコマンド
         dialogue: [
             { speaker: '主人公', text: 'OpenClawに任せたら…もう終わった!?' },
             { speaker: 'ナレーション', text: 'AIエージェントが自動で処理。驚異的な効率だ…！' },
@@ -89,7 +91,8 @@ const ACTIONS = [
         name: '🔥 議事録AI構築',
         description: '自分でAIを作る！最強',
         effects: { stamina: -15, aiKnowledge: 10, sideHustle: 25, family: 0, motivation: 15 },
-        unlockCondition: { stat: 'aiKnowledge', value: BALANCE.UNLOCK_GIJIROKU },
+        unlockCondition: null,
+        requiresUnlock: true,   // 週間判定で解放されるコマンド
         dialogue: [
             { speaker: '主人公', text: '俺が…AIを作る側になるなんて。' },
             { speaker: 'ナレーション', text: '議事録→タスク化AI、完成！これが最強の武器だ。' },
@@ -118,7 +121,6 @@ const EVENTS = [
         ],
         choices: null,  // 選択肢なし（固定イベント）
         autoEffect: { aiKnowledge: 10, motivation: 15 },
-        unlockMessage: '🤖 「ChatGPT活用」が解放されました！',
     },
     {
         id: 'openclaw_discovery',
@@ -135,7 +137,6 @@ const EVENTS = [
         ],
         choices: null,
         autoEffect: { aiKnowledge: 10, motivation: 10 },
-        unlockMessage: '⚡ 「OpenClaw活用」が解放されました！',
     },
     {
         id: 'gijiroku_epiphany',
@@ -152,7 +153,6 @@ const EVENTS = [
         ],
         choices: null,
         autoEffect: { aiKnowledge: 10, motivation: 15 },
-        unlockMessage: '🔥 「議事録AI構築」が解放されました！',
     },
     // ===== ランダムイベント =====
     {
@@ -323,10 +323,178 @@ const EVENTS = [
             },
         ],
     },
+    // ===== ランダムイベント（追加分） =====
+    {
+        id: 'morning_mentor',
+        name: '朝活メンターの出現',
+        type: 'random',
+        condition: (stats) => stats.aiKnowledge >= 40,
+        dialogue: [
+            { speaker: 'ナレーション', text: '朝活コミュニティで、ある人物に声をかけられた。' },
+            { speaker: 'メンター', text: 'いい動きしてるね。AI、かなり使い込んでるでしょ？' },
+            { speaker: '主人公', text: 'え…見ててくれたんですか？' },
+            { speaker: 'メンター', text: '僕もAIで事業をやってるんだ。少しアドバイスしようか？' },
+        ],
+        choices: [
+            {
+                text: '「ぜひお願いします！」',
+                effects: { aiKnowledge: 15, sideHustle: 10, motivation: 15 },
+                response: [
+                    { speaker: 'メンター', text: '大事なのは「仕組み化」だよ。AIは道具、設計は君がやる。' },
+                    { speaker: 'ナレーション', text: 'メンターの言葉が、視界を広げた。' },
+                ],
+            },
+            {
+                text: '「自分のペースでやりたいので…」',
+                effects: { motivation: 5 },
+                response: [
+                    { speaker: 'メンター', text: 'いいね、その芯の強さは大事だよ。応援してる。' },
+                    { speaker: 'ナレーション', text: '自分を信じる道を選んだ。' },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'family_dinner',
+        name: '家族団らん',
+        type: 'random',
+        condition: (stats) => stats.family >= 60,
+        dialogue: [
+            { speaker: 'ナレーション', text: '久しぶりに家族でゆっくり夕食を囲んだ。' },
+            { speaker: '妻', text: '最近、バランス取れてきたよね。嬉しい。' },
+            { speaker: '子供', text: 'パパ〜！ハンバーグおいしいね！' },
+        ],
+        choices: [
+            {
+                text: '「週末はみんなでお出かけしよう！」',
+                effects: { family: 15, motivation: 20, stamina: -5 },
+                response: [
+                    { speaker: '子供', text: 'やったー！！動物園行きたい！！' },
+                    { speaker: 'ナレーション', text: '家族の笑顔が、明日への活力になる。' },
+                ],
+            },
+            {
+                text: '「ありがとう。もう少し頑張るよ」',
+                effects: { family: 5, motivation: 10 },
+                response: [
+                    { speaker: '妻', text: '無理しないでね。あなたのペースでいいんだよ。' },
+                    { speaker: 'ナレーション', text: '温かい言葉に、心が癒された。' },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'side_client',
+        name: '副業の初クライアント',
+        type: 'random',
+        condition: (stats) => stats.sideHustle >= 50,
+        dialogue: [
+            { speaker: 'ナレーション', text: 'ある日、DMが届いた——' },
+            { speaker: 'クライアント', text: 'あなたのAI活用記事を見ました。うちの業務も相談できますか？' },
+            { speaker: '主人公', text: '（初めてのクライアント…！これはチャンスだ…！）' },
+        ],
+        choices: [
+            {
+                text: '全力で対応する',
+                effects: { sideHustle: 20, aiKnowledge: 5, stamina: -15, family: -5 },
+                response: [
+                    { speaker: 'クライアント', text: 'すごい！こんなに早く提案いただけるとは。' },
+                    { speaker: 'ナレーション', text: '初収入のチャンス。でも体力と家族の時間を犠牲にした。' },
+                ],
+            },
+            {
+                text: '無理のない範囲で引き受ける',
+                effects: { sideHustle: 10, motivation: 10 },
+                response: [
+                    { speaker: 'クライアント', text: 'ありがとうございます、ゆっくりでいいですよ。' },
+                    { speaker: 'ナレーション', text: '無理せず、着実に信頼を積み重ねる。' },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'burnout_warning',
+        name: 'バーンアウト警告',
+        type: 'random',
+        condition: (stats) => stats.stamina < 30 && stats.motivation < 40,
+        dialogue: [
+            { speaker: 'ナレーション', text: '朝、アラームが鳴っても体が動かない——' },
+            { speaker: '主人公', text: '…なんのために起きるんだっけ。' },
+            { speaker: '主人公', text: '全部やめたい…もう疲れた…' },
+            { speaker: 'ナレーション', text: '⚠️ バーンアウト（燃え尽き症候群）の危険信号。' },
+        ],
+        choices: [
+            {
+                text: '思い切って1日完全休養する',
+                effects: { stamina: 40, motivation: 30, sideHustle: -10 },
+                response: [
+                    { speaker: 'ナレーション', text: '一日中ゴロゴロした。罪悪感はあるが…体も心も楽になった。' },
+                    { speaker: '主人公', text: '…よし。また明日から頑張ろう。' },
+                ],
+            },
+            {
+                text: '根性で乗り越える',
+                effects: { stamina: -15, motivation: -20, sideHustle: 5 },
+                response: [
+                    { speaker: 'ナレーション', text: '力ずくで動いた。でも効率はひどい。' },
+                    { speaker: 'ナレーション', text: '⚠️ このままでは本当に倒れる…。' },
+                ],
+            },
+        ],
+    },
+    {
+        id: 'ai_news',
+        name: 'AIニュース速報',
+        type: 'random',
+        condition: () => true,  // 常時発生可能
+        dialogue: [
+            { speaker: 'ナレーション', text: '朝のニュースを見ていると——' },
+            { speaker: 'ナレーション', text: '「AI技術の進化が加速、新モデル発表」' },
+            { speaker: '主人公', text: 'おお…また世界が変わりそうだ。' },
+        ],
+        choices: [
+            {
+                text: 'すぐに新技術を調査する',
+                effects: { aiKnowledge: 10, stamina: -10, motivation: 10 },
+                response: [
+                    { speaker: '主人公', text: 'なるほど…これは使えそうだ！' },
+                    { speaker: 'ナレーション', text: '最先端の知識を吸収した。' },
+                ],
+            },
+            {
+                text: '後でチェックしよう',
+                effects: { motivation: -5 },
+                response: [
+                    { speaker: 'ナレーション', text: '忙しさに追われて、結局チェックし忘れた…。' },
+                ],
+            },
+        ],
+    },
 ];
 
 // ============ エンディング条件 ============
+// 上から順にマッチ判定。最初にtrueになったエンディングが採用される
 const ENDINGS = [
+    // ===== SECRET END（2周目以降限定） =====
+    {
+        id: 'secret_end',
+        rank: 'SS',
+        name: '👑 SECRET END — 朝活マスター',
+        // 2周目以降 かつ 全ステータス80以上で到達
+        condition: (stats) =>
+            localStorage.getItem('ai_rpg_cleared') === 'true'
+            && stats.aiKnowledge >= 80 && stats.sideHustle >= 80
+            && stats.family >= 80 && stats.motivation >= 60 && stats.stamina >= 50,
+        story: [
+            { speaker: 'ナレーション', text: '——この物語の先を、あなたは知っている。' },
+            { speaker: '主人公', text: '2度目の朝活ジャーニー…今度は全てを手に入れた。' },
+            { speaker: 'ナレーション', text: 'AI起業、家族との絆、そして健康。全てが最高水準。' },
+            { speaker: '妻', text: 'パパは本当にすごいね。尊敬してるよ。' },
+            { speaker: '主人公', text: 'ありがとう。でもこれは、みんなのおかげだ。' },
+            { speaker: 'ナレーション', text: '完璧な朝活ライフ。これが真の最強END——' },
+        ],
+    },
+    // ===== TRUE END =====
     {
         id: 'true_end',
         rank: 'S',
@@ -343,6 +511,7 @@ const ENDINGS = [
             { speaker: 'ナレーション', text: 'これはゲームの話だけど…あなたの物語でもある。' },
         ],
     },
+    // ===== GOOD END =====
     {
         id: 'good_end',
         rank: 'A',
@@ -357,6 +526,38 @@ const ENDINGS = [
             { speaker: 'ナレーション', text: 'あとは、行動し続けるだけだ。' },
         ],
     },
+    // ===== BAD END: 体力0 =====
+    {
+        id: 'bad_end_burnout',
+        rank: 'C',
+        name: '💀 BAD END — 燃え尽きた朝',
+        // MainScene/EventSceneから直接呼ばれるため、conditionは補助的
+        condition: (stats) => stats.stamina <= 0,
+        story: [
+            { speaker: 'ナレーション', text: '——体が、動かない。' },
+            { speaker: '主人公', text: '……。' },
+            { speaker: '妻', text: 'ちょっと！しっかりして！！' },
+            { speaker: 'ナレーション', text: '無理をしすぎた。体が限界を超えた。' },
+            { speaker: 'ナレーション', text: '朝活チャレンジは、ここで終わる——' },
+            { speaker: 'ナレーション', text: '体を壊しては、何も始まらない。休む勇気も、強さだ。' },
+        ],
+    },
+    // ===== BAD END: 家族崩壊 =====
+    {
+        id: 'bad_end_family',
+        rank: 'C',
+        name: '💔 BAD END — 家族崩壊',
+        condition: (stats) => stats.family <= 0,
+        story: [
+            { speaker: 'ナレーション', text: '——ある夜。帰宅すると、家の中が静かだった。' },
+            { speaker: '主人公', text: '…ただいま。あれ、誰もいない…？' },
+            { speaker: 'ナレーション', text: 'テーブルの上に、一枚の手紙。' },
+            { speaker: '妻', text: '「しばらく実家に帰ります。子供も連れていきます。」' },
+            { speaker: '主人公', text: '…嘘だろ…' },
+            { speaker: 'ナレーション', text: '何のための朝活だったのか。大切なものを見失った代償は、大きい。' },
+        ],
+    },
+    // ===== NORMAL END（デフォルト） =====
     {
         id: 'normal_end',
         rank: 'B',

@@ -49,11 +49,16 @@ class PrologueScene extends Phaser.Scene {
         // ========== クリックで次のセリフへ ==========
         this.input.on('pointerdown', () => this.nextDialogue());
 
-        // ========== 「スキップ」テキスト ==========
-        this.add.text(width - 20, 20, '▶ タップで進む', {
-            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '11px',
-            color: '#666688',
-        }).setOrigin(1, 0);
+        // ========== SKIPボタン ==========
+        const skipBtn = this.add.text(width - 20, 20, '⏩ SKIP', {
+            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '13px',
+            color: '#666688', fontStyle: 'bold',
+        }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+        // ホバーで色変更
+        skipBtn.on('pointerover', () => skipBtn.setColor('#ffd700'));
+        skipBtn.on('pointerout', () => skipBtn.setColor('#666688'));
+        // クリックでプロローグ全体をスキップ
+        skipBtn.on('pointerdown', () => this.skipPrologue());
 
         this.cameras.main.fadeIn(600, 0, 0, 0);
     }
@@ -167,8 +172,27 @@ class PrologueScene extends Phaser.Scene {
                     week: 1,
                     turn: 0,
                     stats: { ...BALANCE.INITIAL_STATS },
+                    unlockedCommands: [],  // 初期状態：解放コマンドなし
                 });
             });
         }
+    }
+
+    // ========== プロローグを丸ごとスキップ ==========
+    skipPrologue() {
+        // タイプライターを停止
+        if (this.typeTimer) this.typeTimer.destroy();
+        // クリックリスナーを解除
+        this.input.off('pointerdown');
+        // MainSceneへ直接遷移
+        this.cameras.main.fadeOut(400, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('MainScene', {
+                week: 1,
+                turn: 0,
+                stats: { ...BALANCE.INITIAL_STATS },
+                unlockedCommands: [],
+            });
+        });
     }
 }

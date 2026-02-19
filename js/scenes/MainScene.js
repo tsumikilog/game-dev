@@ -22,11 +22,26 @@ class MainScene extends Phaser.Scene {
         this.isAnimating = false;
         // イベント済みフラグ（EventSceneから戻った時にtrue）
         this.eventDone = data.eventDone || false;
+        // 解放済みコマンド管理（アクションIDの配列）
+        this.unlockedCommands = data.unlockedCommands ? [...data.unlockedCommands] : [];
+        // アンロック済みフラグ（イベント後に判定をスキップするため）
+        this.unlockChecked = data.unlockChecked || false;
+        // Week開始時のステータスを保存（週間レポートの差分表示用）
+        this.weekStartStats = data.weekStartStats ? { ...data.weekStartStats } : { ...this.stats };
     }
 
     create() {
         const { width, height } = this.cameras.main;
         this.cameras.main.setBackgroundColor(0x0d0b26);
+
+        // ========== オートセーブ ==========
+        try {
+            localStorage.setItem('ai_rpg_save', JSON.stringify({
+                week: this.week, turn: this.turn,
+                stats: this.stats,
+                unlockedCommands: this.unlockedCommands,
+            }));
+        } catch (e) { /* localStorage使用不可の場合は無視 */ }
 
         // ========== 背景 ==========
         this.createBackground(width, height);
@@ -60,6 +75,7 @@ class MainScene extends Phaser.Scene {
                         this.scene.start('EventScene', {
                             week: this.week, turn: this.turn,
                             stats: { ...this.stats }, eventId: fixedEvent.id,
+                            unlockedCommands: [...this.unlockedCommands],
                         });
                     });
                 });
@@ -79,11 +95,26 @@ class MainScene extends Phaser.Scene {
                             this.scene.start('EventScene', {
                                 week: this.week, turn: this.turn,
                                 stats: { ...this.stats }, eventId: randomEvent.id,
+                                unlockedCommands: [...this.unlockedCommands],
                             });
                         });
                     });
                     return;
                 }
+            }
+        }
+
+        // ========== アンロック判定（Week開始時、turn===0 かつイベント後） ==========
+        if (this.turn === 0 && !this.unlockChecked) {
+            const newUnlocks = this.checkWeeklyUnlocks();
+            if (newUnlocks.length > 0) {
+                // アンロック演出を表示してから行動選択へ
+                this.showUnlockAnimation(newUnlocks, () => {
+                    this.showDialogueText('ナレーション', '何をする？ 行動を選ぼう。');
+                    this.createActionButtons(width, height);
+                });
+                this.cameras.main.fadeIn(400, 0, 0, 0);
+                return;  // 演出完了後にボタン表示するのでここでreturn
             }
         }
 
@@ -96,6 +127,76 @@ class MainScene extends Phaser.Scene {
         this.createActionButtons(width, height);
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
+    }
+
+    // ========== 週間アンロック判定 ==========
+    // 現在のWeek以下の全条件をチェックし、新たに解放されたコマンドを返す
+    checkWeeklyUnlocks() {
+        const newUnlocks = [];
+        BALANCE.WEEKLY_UNLOCKS.forEach(unlock => {
+            // 現在のWeekが解放対象のWeek以降、かつまだ解放されていない
+            if (unlock.week <= this.week
+                && !this.unlockedCommands.includes(unlock.actionId)
+                && this.stats[unlock.stat] >= unlock.value) {
+                this.unlockedCommands.push(unlock.actionId);
+                newUnlocks.push(unlock);
+            }
+        });
+        this.unlockChecked = true;  // このWeekの判定完了
+        return newUnlocks;
+    }
+
+    // ========== アンロック演出 ==========
+    // 新しく解放されたコマンドを順番にアニメーション表示
+    showUnlockAnimation(unlocks, onComplete) {
+        const { width, height } = this.cameras.main;
+        let index = 0;
+
+        const showNext = () => {
+            if (index >= unlocks.length) {
+                onComplete();
+                return;
+            }
+            const unlock = unlocks[index];
+            // アンロックメッセージを表示
+            const msg = this.add.text(width / 2, height * 0.45, unlock.message, {
+                fontFamily: 'Noto Sans JP, sans-serif', fontSize: '20px',
+                color: '#ffd700', fontStyle: 'bold',
+                stroke: '#000000', strokeThickness: 3,
+            }).setOrigin(0.5).setAlpha(0);
+
+            // 解放条件テキスト
+            const condition = this.add.text(width / 2, height * 0.52,
+                `✔ ${STAT_CONFIG.find(s => s.key === unlock.stat).label} ${this.stats[unlock.stat]} / ${unlock.value} 達成！`, {
+                fontFamily: 'Noto Sans JP, sans-serif', fontSize: '13px',
+                color: '#44ff88',
+            }).setOrigin(0.5).setAlpha(0);
+
+            // フラッシュ演出
+            this.cameras.main.flash(400, 255, 215, 0);
+
+            // フェードイン
+            this.tweens.add({ targets: [msg, condition], alpha: 1, duration: 600 });
+
+            // クリックで次へ
+            this.input.once('pointerdown', () => {
+                this.tweens.add({
+                    targets: [msg, condition], alpha: 0, duration: 300,
+                    onComplete: () => {
+                        msg.destroy();
+                        condition.destroy();
+                        index++;
+                        showNext();
+                    }
+                });
+            });
+        };
+
+        // ターン情報も表示
+        const turnLabel = TURN_LABELS[this.turn] || '🌅 朝';
+        this.sceneLabel.setText(`Week ${this.week} — ${turnLabel}`);
+
+        showNext();
     }
 
     // ========== 背景 ==========
@@ -161,6 +262,28 @@ class MainScene extends Phaser.Scene {
         }).setOrigin(0.5);
     }
 
+    // ========== ステータスバー更新 ==========
+    // 行動適用後にバーと数値を再描画（アニメーション付き）
+    updateStatusBars() {
+        STAT_CONFIG.forEach(cfg => {
+            const bar = this.statBars[cfg.key];
+            if (!bar) return;
+            const val = this.stats[cfg.key];
+            const max = BALANCE.MAX_STATS[cfg.key];
+            const ratio = Math.max(0, Math.min(1, val / max));
+
+            // バー再描画
+            bar.fill.clear();
+            bar.fill.fillStyle(bar.color, 1);
+            bar.fill.fillRoundedRect(bar.x, bar.y, bar.width * ratio, bar.height, 3);
+
+            // 数値更新
+            if (this.statTexts[cfg.key]) {
+                this.statTexts[cfg.key].setText(`${val}`);
+            }
+        });
+    }
+
     getGlobalTurn() {
         return (this.week - 1) * BALANCE.TURNS_PER_WEEK + this.turn + 1;
     }
@@ -213,12 +336,14 @@ class MainScene extends Phaser.Scene {
     createActionButtons(w, h) {
         this.actionButtons = [];
         const available = ACTIONS.filter(a => {
-            if (!a.unlockCondition) return true;
-            return this.stats[a.unlockCondition.stat] >= a.unlockCondition.value;
+            // requiresUnlockがないコマンドは常に使用可能
+            if (!a.requiresUnlock) return true;
+            // requiresUnlock=true のコマンドは、unlockedCommandsに含まれていれば使用可能
+            return this.unlockedCommands.includes(a.id);
         });
         const locked = ACTIONS.filter(a => {
-            if (!a.unlockCondition) return false;
-            return this.stats[a.unlockCondition.stat] < a.unlockCondition.value;
+            if (!a.requiresUnlock) return false;
+            return !this.unlockedCommands.includes(a.id);
         });
 
         const all = [...available, ...locked];
@@ -253,7 +378,7 @@ class MainScene extends Phaser.Scene {
                 color: isDisabled ? '#666666' : '#ffffff', fontStyle: 'bold',
             }).setOrigin(0.5);
 
-            this.add.text(x + btnW / 2, y + 24, isLocked ? `AI知識 ${action.unlockCondition.value} で解放` : action.description, {
+            this.add.text(x + btnW / 2, y + 24, isLocked ? '次のWeek開始時に判定' : action.description, {
                 fontFamily: 'Noto Sans JP, sans-serif', fontSize: '9px',
                 color: isDisabled ? '#555555' : '#aaaacc',
             }).setOrigin(0.5);
@@ -344,6 +469,8 @@ class MainScene extends Phaser.Scene {
     }
 
     // 行動実行時のダイアログ再生
+    // ダイアログを1つずつ表示し、クリックで次へ進む
+    // 2回連続クリックで残りのダイアログをスキップ
     playActionDialogue(action, applied) {
         let index = 0;
         const dialogues = action.dialogue;
@@ -359,10 +486,26 @@ class MainScene extends Phaser.Scene {
                 this.showResultAndProceed(applied);
             }
         };
+
+        // SKIPボタン（ダイアログ中のみ表示）
+        const { width } = this.cameras.main;
+        const skipBtn = this.add.text(width - 15, 315, '⏩ SKIP', {
+            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '11px',
+            color: '#666688', fontStyle: 'bold',
+        }).setOrigin(1, 0).setInteractive({ useHandCursor: true }).setDepth(10);
+        skipBtn.on('pointerover', () => skipBtn.setColor('#ffd700'));
+        skipBtn.on('pointerout', () => skipBtn.setColor('#666688'));
+        skipBtn.on('pointerdown', () => {
+            // ダイアログを全スキップして結果表示へ
+            this.input.off('pointerdown');
+            skipBtn.destroy();
+            this.showResultAndProceed(applied);
+        });
+
         showNext();
     }
 
-    // 変動結果表示 → 次のターンへ
+    // 変動結果表示 → 次のターンへ（BAD END判定含む）
     showResultAndProceed(applied) {
         const parts = [];
         Object.keys(applied).forEach(key => {
@@ -375,9 +518,60 @@ class MainScene extends Phaser.Scene {
         // テキストボックスに結果を表示
         this.showDialogueText('結果', parts.join('  '));
 
+        // ========== ステータス変動ポップアップ演出 ==========
+        this.showStatPopups(applied);
+
+        // ステータスバーも更新
+        this.updateStatusBars();
+
         // クリックで次へ
         this.input.once('pointerdown', () => {
+            // ===== BAD END判定 =====
+            if (this.stats.stamina <= 0 || this.stats.family <= 0) {
+                this.cameras.main.fadeOut(500, 0, 0, 0);
+                this.cameras.main.once('camerafadeoutcomplete', () => {
+                    this.scene.start('EndingScene', { stats: { ...this.stats } });
+                });
+                return;
+            }
             this.goToNextTurn();
+        });
+    }
+
+    // ========== ステータス変動ポップアップ ==========
+    // 各ステータスバーの横に +10 / -5 を表示し、浮き上がってフェードアウト
+    showStatPopups(applied) {
+        const { width } = this.cameras.main;
+        const startX = 15;
+        const barW = (width - 30) / STAT_CONFIG.length - 4;
+
+        STAT_CONFIG.forEach((cfg, i) => {
+            const val = applied[cfg.key];
+            if (!val || val === 0) return;
+
+            const x = startX + i * (barW + 4) + barW / 2;
+            const y = 38;  // ステータスバーの下
+            const sign = val > 0 ? '+' : '';
+            const color = val > 0 ? '#44ff88' : '#ff4444';
+
+            const popup = this.add.text(x, y, `${sign}${val}`, {
+                fontFamily: 'Orbitron, sans-serif', fontSize: '14px',
+                color: color, fontStyle: 'bold',
+                stroke: '#000000', strokeThickness: 2,
+            }).setOrigin(0.5).setAlpha(0).setDepth(20);
+
+            // フェードイン → 上に浮き上がってフェードアウト
+            this.tweens.add({
+                targets: popup, alpha: 1, y: y - 5,
+                duration: 300, delay: i * 100,
+                onComplete: () => {
+                    this.tweens.add({
+                        targets: popup, alpha: 0, y: y - 20,
+                        duration: 800, delay: 600,
+                        onComplete: () => popup.destroy(),
+                    });
+                },
+            });
         });
     }
 
@@ -385,7 +579,8 @@ class MainScene extends Phaser.Scene {
         const emojis = {
             '主人公': '😤', 'ナレーション': '📖', '妻': '👩',
             '朝活仲間': '🧑‍💻', '同僚': '👨‍💼', '子供': '👧',
-            '上司': '👔', '効果': '📊', '結果': '📊',
+            '上司': '👔', 'メンター': '🧑‍🏫', 'クライアント': '💼',
+            '効果': '📊', '結果': '📊',
         };
         this.characterEmoji.setText(emojis[speaker] || '😤');
     }
@@ -399,6 +594,8 @@ class MainScene extends Phaser.Scene {
             this.cameras.main.once('camerafadeoutcomplete', () => {
                 this.scene.start('WeekEndScene', {
                     week: this.week, stats: { ...this.stats },
+                    unlockedCommands: [...this.unlockedCommands],
+                    prevStats: { ...this.weekStartStats },  // 差分表示用
                 });
             });
         } else {
@@ -406,6 +603,9 @@ class MainScene extends Phaser.Scene {
             this.cameras.main.once('camerafadeoutcomplete', () => {
                 this.scene.start('MainScene', {
                     week: this.week, turn: nextTurn, stats: { ...this.stats },
+                    unlockedCommands: [...this.unlockedCommands],
+                    unlockChecked: this.unlockChecked,
+                    weekStartStats: { ...this.weekStartStats },  // 同Week内は引き継ぐ
                 });
             });
         }

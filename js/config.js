@@ -110,10 +110,13 @@ const BALANCE = {
     MOTIVATION_HIGH: 70,      // これ以上でステータス1.3倍
     MOTIVATION_LOW: 30,       // これ以下でステータス0.7倍
 
-    // AI コマンド解放条件（AI知識の閾値）
-    UNLOCK_CHATGPT: 20,       // ChatGPT活用 解放ライン
-    UNLOCK_OPENCLAW: 50,      // OpenClaw活用 解放ライン
-    UNLOCK_GIJIROKU: 80,      // 議事録AI構築 解放ライン
+    // 週間アンロック判定設定
+    // 各Weekの開始時にステータスをチェックし、条件を満たしていればコマンドを解放
+    WEEKLY_UNLOCKS: [
+        { week: 2, actionId: 'use_chatgpt', stat: 'aiKnowledge', value: 15, message: '🤖 「ChatGPT活用」が解放されました！' },
+        { week: 3, actionId: 'use_openclaw', stat: 'aiKnowledge', value: 40, message: '⚡ 「OpenClaw活用」が解放されました！' },
+        { week: 4, actionId: 'build_gijiroku', stat: 'aiKnowledge', value: 70, message: '🔥 「議事録AI構築」が解放されました！' },
+    ],
 
     // イベント発生確率
     EVENT_CHANCE: 0.35,       // 35%でランダムイベント

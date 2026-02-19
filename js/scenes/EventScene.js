@@ -14,6 +14,8 @@ class EventScene extends Phaser.Scene {
         this.turn = data.turn;
         this.stats = { ...data.stats };
         this.eventId = data.eventId;
+        // 解放済みコマンドを引き継ぎ
+        this.unlockedCommands = data.unlockedCommands ? [...data.unlockedCommands] : [];
     }
 
     create() {
@@ -60,6 +62,18 @@ class EventScene extends Phaser.Scene {
 
         // クリックで進む
         this.input.on('pointerdown', () => this.nextDialogue());
+
+        // ========== SKIPボタン ==========
+        const skipBtn = this.add.text(width - 20, 20, '⏩ SKIP', {
+            fontFamily: 'Noto Sans JP, sans-serif', fontSize: '13px',
+            color: '#666688', fontStyle: 'bold',
+        }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+        skipBtn.on('pointerover', () => skipBtn.setColor('#ffd700'));
+        skipBtn.on('pointerout', () => skipBtn.setColor('#666688'));
+        skipBtn.on('pointerdown', (pointer) => {
+            pointer.event.stopPropagation();  // 通常のクリック進行と衝突しないように
+            this.skipEvent();
+        });
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
     }
@@ -238,7 +252,8 @@ class EventScene extends Phaser.Scene {
     // 選択結果ダイアログ再生
     playResponse(responses, idx) {
         if (idx >= responses.length) {
-            this.returnToMain();
+            // ===== BAD END判定 =====
+            this.checkBadEndOrReturn();
             return;
         }
         this.showDialogue(responses[idx]);
@@ -268,20 +283,43 @@ class EventScene extends Phaser.Scene {
             });
         }
 
-        // アンロックメッセージ表示
-        if (this.event.unlockMessage) {
-            const { width, height } = this.cameras.main;
-            const msg = this.add.text(width / 2, height * 0.50, this.event.unlockMessage, {
-                fontFamily: 'Noto Sans JP, sans-serif', fontSize: '20px',
-                color: '#ffd700', fontStyle: 'bold',
-                stroke: '#000000', strokeThickness: 3,
-            }).setOrigin(0.5).setAlpha(0);
-            this.tweens.add({ targets: msg, alpha: 1, duration: 600 });
-            this.cameras.main.flash(400, 255, 215, 0);
+        // クリックでBAD END判定→MainSceneに戻る
+        this.input.once('pointerdown', () => this.checkBadEndOrReturn());
+    }
 
-            this.input.once('pointerdown', () => this.returnToMain());
+    // ===== BAD END判定 =====
+    // 体力0 or 家族0ならEndingSceneへ直行、そうでなければMainSceneへ戻る
+    checkBadEndOrReturn() {
+        if (this.stats.stamina <= 0 || this.stats.family <= 0) {
+            this.cameras.main.fadeOut(500, 0, 0, 0);
+            this.cameras.main.once('camerafadeoutcomplete', () => {
+                this.scene.start('EndingScene', { stats: { ...this.stats } });
+            });
         } else {
             this.returnToMain();
+        }
+    }
+
+    // ========== イベントダイアログをスキップ ==========
+    skipEvent() {
+        // タイプライターを停止
+        if (this.typeTimer) this.typeTimer.destroy();
+        this.isTyping = false;
+        // クリックリスナーを解除
+        this.input.off('pointerdown');
+
+        if (this.event.choices) {
+            // 選択肢があるイベント → 最後のセリフを表示して選択肢へ
+            const lastDialogue = this.event.dialogue[this.event.dialogue.length - 1];
+            this.showDialogue(lastDialogue);
+            // タイプライターも即座に完了させる
+            if (this.typeTimer) this.typeTimer.destroy();
+            this.dialogueText.setText(lastDialogue.text);
+            this.isTyping = false;
+            this.showChoices();
+        } else {
+            // 選択肢なし（固定イベント） → 自動効果を適用して戻る
+            this.applyAutoEffect();
         }
     }
 
@@ -294,6 +332,7 @@ class EventScene extends Phaser.Scene {
                 turn: this.turn,
                 stats: { ...this.stats },
                 eventDone: true,
+                unlockedCommands: [...this.unlockedCommands],  // 解放済み情報を引き継ぎ
             });
         });
     }

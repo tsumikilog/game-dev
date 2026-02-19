@@ -11,6 +11,10 @@ class WeekEndScene extends Phaser.Scene {
     init(data) {
         this.week = data.week;
         this.stats = { ...data.stats };
+        // 解放済みコマンドを引き継ぎ
+        this.unlockedCommands = data.unlockedCommands ? [...data.unlockedCommands] : [];
+        // 前週のステータス（差分表示用）
+        this.prevStats = data.prevStats ? { ...data.prevStats } : null;
     }
 
     create() {
@@ -58,6 +62,19 @@ class WeekEndScene extends Phaser.Scene {
                 fontFamily: 'Orbitron, sans-serif', fontSize: '14px',
                 color: '#ffd700',
             }).setOrigin(1, 0);
+
+            // 前週との差分表示
+            if (this.prevStats) {
+                const diff = val - (this.prevStats[cfg.key] || 0);
+                if (diff !== 0) {
+                    const sign = diff > 0 ? '▲+' : '▼';
+                    const color = diff > 0 ? '#44ff88' : '#ff4444';
+                    this.add.text(width - 40, y + 16, `${sign}${diff}`, {
+                        fontFamily: 'Noto Sans JP, sans-serif', fontSize: '11px',
+                        color: color,
+                    }).setOrigin(1, 0);
+                }
+            }
 
             // バー
             const barW = width - 80;
@@ -149,6 +166,7 @@ class WeekEndScene extends Phaser.Scene {
                         week: this.week + 1,
                         turn: 0,
                         stats: { ...this.stats },
+                        unlockedCommands: [...this.unlockedCommands],  // 解放済み情報を引き継ぎ
                     });
                 } else {
                     // 全Week完了 → エンディング
