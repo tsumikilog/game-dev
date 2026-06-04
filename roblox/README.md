@@ -11,17 +11,39 @@ Roblox Studio + Rojoで開発するための最小ワークスペースです。
 ## セットアップ
 
 1. Rojoをインストールする。
-   - Aftmanを使う場合: `aftman install`
-   - Homebrewなどで入れる場合: `rojo --version` が通ればOK
-2. Roblox StudioにRojoプラグインを入れる。
-3. このフォルダでRojoを起動する。
+
+```bash
+brew install rojo
+```
+
+2. インストール確認。
+
+```bash
+rojo --version
+```
+
+このMacでは `Rojo 7.6.1` で動作確認済み。
+
+3. Roblox StudioにRojoプラグインを入れる。
+4. このフォルダでRojoを起動する。
 
 ```bash
 cd roblox
 rojo serve default.project.json
 ```
 
-4. Roblox StudioのRojoプラグインから接続する。
+5. Roblox StudioのRojoプラグインから接続する。
+
+## 動作確認済み
+
+以下のコマンドでRojoサーバー起動まで確認済み。
+
+```bash
+cd roblox
+rojo serve default.project.json --port 34872
+```
+
+確認後、テスト用サーバーは停止済み。
 
 ## フォルダ構成
 
