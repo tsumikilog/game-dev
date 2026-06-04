@@ -25,6 +25,17 @@ rojo --version
 このMacでは `Rojo 7.6.1` で動作確認済み。
 
 3. Roblox StudioにRojoプラグインを入れる。
+
+```bash
+rojo plugin install
+```
+
+このMacでは以下にインストール済み。
+
+```text
+~/Documents/Roblox/Plugins/RojoManagedPlugin.rbxm
+```
+
 4. このフォルダでRojoを起動する。
 
 ```bash
@@ -44,6 +55,8 @@ rojo serve default.project.json --port 34872
 ```
 
 確認後、テスト用サーバーは停止済み。
+
+Rojo Studioプラグインもインストール済み。
 
 ## フォルダ構成
 
